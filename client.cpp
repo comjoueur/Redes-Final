@@ -25,11 +25,18 @@ using namespace std;
 bool close_server = false;
 struct sockaddr_in servaddr;
 int sockfd;
+int client_id = -1;
 
 int write_rdt(string message)
 {
+  if(client_id != -1) {
+    string id_str;
+    id_str += 'a' + client_id;
+    message = id_str + message;
+  }
   char buffer[message.size()];
-  for (int i=0;i<message.size(); ++i) {
+  for (int i = 0; i < message.size(); ++i)
+  {
     buffer[i] = message[i];
   }
   socklen_t len = sizeof(servaddr);
@@ -43,9 +50,10 @@ int read_rdt(string &message, int size)
   socklen_t len = sizeof(servaddr);
   memset(&servaddr, 0, sizeof(servaddr));
   int n = recvfrom(sockfd, (char *)buffer, size,
-               MSG_WAITALL, (struct sockaddr *)&servaddr,
-               &len);
-  for(int i=0; i < size; i++) {
+                   MSG_WAITALL, (struct sockaddr *)&servaddr,
+                   &len);
+  for (int i = 0; i < size; i++)
+  {
     message += buffer[i];
   }
   return n;
@@ -120,16 +128,27 @@ string read_command_server()
   command += _command[0];
   return command;
 }
-void server_process()
-{
-  bool close = 0;
-  while(!close) {
-    write_string_server("Moamoa");
-    cout<<read_string_server()<<endl;
-    close = true;
-  }
+
+int register_client() {
+  write_rdt("R");
+  string message;
+  read_rdt(message, 1);
+  client_id = message[0]-'a';
+  cout<<"Client register with client_id "<<client_id<<endl;
 }
 
+void server_process()
+{
+  register_client();
+  bool close = 0;
+  while (!close)
+  {
+    string p;
+    cin>> p;
+    write_string_server(p);
+    cout<<read_string_server()<<endl;
+  }
+}
 
 int main()
 {
