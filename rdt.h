@@ -10,6 +10,18 @@
 
 using namespace std;
 
+string get_hash(string p) {
+  int hash = 0;
+  for(int i=0;i<p.size();i++) {
+    hash += int(p[i]);
+  }
+  hash = hash % 100;
+  string rsp;
+  rsp += ('a' + hash/10);
+  rsp += ('a' + hash%10);
+  return rsp;
+}
+
 class rdt_server
 {
 public:
@@ -17,10 +29,11 @@ public:
   vector<deque<string>> wait_messages;
   vector<int> sequence;
   int sockfd;
-  int MAXLINE = 2048;
+  int MAXLINE = 2048;  
 
-  int write_rdt(int client_id, string message)
+  int write_rdt(int client_id, string _message)
   {
+    string message = _message + get_hash(_message);
     char buffer[message.size()];
     for (int i = 0; i < message.size(); ++i)
     {
@@ -100,6 +113,7 @@ public:
   struct sockaddr_in servaddr;
   int sockfd;
   int client_id = -1;
+  int MAXLINE = 2048;
 
   int write_rdt(string message)
   {
@@ -121,16 +135,24 @@ public:
 
   int read_rdt(string &message, int size)
   {
-    char buffer[size];
+    char buffer[MAXLINE];
     socklen_t len = sizeof(servaddr);
     memset(&servaddr, 0, sizeof(servaddr));
-    int n = recvfrom(sockfd, (char *)buffer, size,
+    int n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                      MSG_WAITALL, (struct sockaddr *)&servaddr,
                      &len);
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < n - 2; i++)
     {
       message += buffer[i];
     }
-    return n;
+    string hash;
+    hash += buffer[n-2];
+    hash += buffer[n-1];
+
+    if(hash != get_hash(message)) {
+      cout<<"checksum correct"<<endl;
+    }
+
+    return 0;
   }
 };
