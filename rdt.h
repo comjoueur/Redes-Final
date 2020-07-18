@@ -92,6 +92,17 @@ public:
     {
     }
     message = wait_messages[client_id][0];
+    string _message;
+    for (int i=0;i<message.size()-2;i++) {
+      _message += message[i];
+    }
+    string hash;
+    hash += message[message.size()-2];
+    hash += message[message.size()-1];
+    if(hash!=get_hash(_message)) {
+      cout<<"checksum incorrect"<<endl;
+    }
+    message = _message;
     wait_messages[client_id].pop_front();
     return 0;
   }
@@ -117,6 +128,7 @@ public:
 
   int write_rdt(string message)
   {
+    message += get_hash(message);
     if (client_id != -1)
     {
       string id_str;
@@ -150,7 +162,7 @@ public:
     hash += buffer[n-1];
 
     if(hash != get_hash(message)) {
-      cout<<"checksum correct"<<endl;
+      cout<<"checksum incorrect"<<endl;
     }
 
     return 0;
