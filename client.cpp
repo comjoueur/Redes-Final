@@ -112,6 +112,7 @@ void server_process()
   bool close = 0;
   while (!close)
   {
+    cout<<"Write your message"<<endl;
     string p;
     cin>> p;
     write_string_server(p);

@@ -33,12 +33,18 @@ public:
 
   int write_rdt(int client_id, string _message)
   {
-    string message = _message + get_hash(_message);
+    int seq = sequence[client_id];
+    string seq_client;
+    seq_client += ('a' + (seq/10));
+    seq_client += ('a' + (seq%10));
+    string message = _message + seq_client;
+    message = message + get_hash(_message);
     char buffer[message.size()];
     for (int i = 0; i < message.size(); ++i)
     {
       buffer[i] = message[i];
     }
+    buffer[message.size()] = '\0';
     sockaddr cliaddr = clients[client_id];
     socklen_t len = sizeof(cliaddr);
     sendto(sockfd, buffer, message.size(), MSG_CONFIRM, (const struct sockaddr *)&cliaddr, len);
@@ -93,12 +99,15 @@ public:
     }
     message = wait_messages[client_id][0];
     string _message;
-    for (int i=0;i<message.size()-2;i++) {
+    for (int i=0;i<message.size()-4;i++) {
       _message += message[i];
     }
     string hash;
     hash += message[message.size()-2];
     hash += message[message.size()-1];
+    string seq;
+    seq += message[message.size()-4];
+    seq += message[message.size()-3];
     if(hash!=get_hash(_message)) {
       cout<<"checksum incorrect"<<endl;
     }
@@ -125,10 +134,17 @@ public:
   int sockfd;
   int client_id = -1;
   int MAXLINE = 2048;
+  int sequence;
 
   int write_rdt(string message)
   {
-    message += get_hash(message);
+    string _message = message;
+    int seq = sequence;
+    string seq_client;
+    seq_client += ('a' + (seq/10));
+    seq_client += ('a' + (seq%10));
+    message += seq_client;
+    message += get_hash(_message);
     if (client_id != -1)
     {
       string id_str;
@@ -153,13 +169,16 @@ public:
     int n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                      MSG_WAITALL, (struct sockaddr *)&servaddr,
                      &len);
-    for (int i = 0; i < n - 2; i++)
+    for (int i = 0; i < n - 4; i++)
     {
       message += buffer[i];
     }
     string hash;
     hash += buffer[n-2];
     hash += buffer[n-1];
+    string seq;
+    seq += message[message.size()-4];
+    seq += message[message.size()-3];
 
     if(hash != get_hash(message)) {
       cout<<"checksum incorrect"<<endl;
