@@ -1,13 +1,10 @@
 #include "lib.h"
 
-int udp_max_message_size = 2000;
-
 class udp_server
 {
 public:
   vector<sockaddr> clients;
   vector<deque<string>> wait_messages;
-  vector<int> sequence;
   int sockfd;
   int MAXLINE = 2048;
 

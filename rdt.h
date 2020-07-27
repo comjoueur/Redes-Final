@@ -1,189 +1,149 @@
-#include <bits/stdc++.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "lib.h"
+#include "udp.h"
 
-using namespace std;
+string ack_ok = "OK";
+string ack_error = "ERROR";
+string ack_end = "END_ACK_BULK";
 
-string get_hash(string p) {
+string get_hash(string p)
+{
   int hash = 0;
-  for(int i=0;i<p.size();i++) {
+  for (int i = 0; i < p.size(); i++)
+  {
     hash += int(p[i]);
   }
   hash = hash % 100;
   string rsp;
-  rsp += ('a' + hash/10);
-  rsp += ('a' + hash%10);
+  rsp += ('a' + hash / 10);
+  rsp += ('a' + hash % 10);
   return rsp;
+}
+
+bool check_hash(string p, string &msg)
+{
+  msg = "";
+  for (int i = 0; i < p.size() - 2; i++)
+  {
+    msg += p[i];
+  }
+  string hash;
+  hash += p[p.size() - 2];
+  hash += p[p.size() - 1];
+  return get_hash(msg) == hash;
 }
 
 class rdt_server
 {
 public:
-  vector<sockaddr> clients;
-  vector<deque<string>> wait_messages;
-  vector<int> sequence;
-  int sockfd;
-  int MAXLINE = 2048;  
+  udp_server serv;
+  vector<int>sequence;
+  int num_clients = 0;
 
-  int write_rdt(int client_id, string _message)
-  {
-    int seq = sequence[client_id];
-    string seq_client;
-    seq_client += ('a' + (seq/10));
-    seq_client += ('a' + (seq%10));
-    string message = _message + seq_client;
-    message = message + get_hash(_message);
-    char buffer[message.size()];
-    for (int i = 0; i < message.size(); ++i)
-    {
-      buffer[i] = message[i];
-    }
-    buffer[message.size()] = '\0';
-    sockaddr cliaddr = clients[client_id];
-    socklen_t len = sizeof(cliaddr);
-    sendto(sockfd, buffer, message.size(), MSG_CONFIRM, (const struct sockaddr *)&cliaddr, len);
-    return 0;
+  bool request_client() {
+    return num_clients != serv.clients.size();
   }
 
-  int register_client(sockaddr cliaddr)
-  {
-    int id = clients.size();
-    clients.push_back(cliaddr);
-    deque<string> novo;
-    wait_messages.push_back(novo);
+  int accept_client() {
     sequence.push_back(0);
-    char char_id = 'a' + id;
-    string rep;
-    rep += char_id;
-    write_rdt(id, rep);
+    return num_clients++;
   }
 
-  void listener()
+  rdt_server(int port)
   {
-    while (1)
+    struct sockaddr_in servaddr;
+    if ((serv.sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
-      char buffer[MAXLINE];
-      sockaddr cliaddr;
-      socklen_t len = sizeof(cliaddr);
-      int n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-                       MSG_WAITALL, (struct sockaddr *)&cliaddr,
-                       &len);
-      buffer[n] = '\0';
-      if (buffer[0] == 'R')
-      {
-        register_client(cliaddr);
-      }
-      else
-      {
-        string msg;
-        for (int i = 1; i < n; i++)
-        {
-          msg += buffer[i];
-        }
-        int client_id = buffer[0] - 'a';
-        wait_messages[client_id].push_back(msg);
-      }
+      perror("socket creation failed");
+      exit(EXIT_FAILURE);
+    }
+
+    memset(&servaddr, 0, sizeof(servaddr));
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(port);
+
+    if (bind(serv.sockfd, (const struct sockaddr *)&servaddr,
+             sizeof(servaddr)) < 0)
+    {
+      perror("bind failed");
+      exit(EXIT_FAILURE);
+    }
+    serv.listen();
+  }
+
+  void write_rdt(int client_id, string _message)
+  {
+    string message = _message + get_hash(_message);
+    serv.write_udp(client_id, message);
+    string ack = serv.read_udp(client_id);
+    if (ack != ack_ok) {
+      write_rdt(client_id, _message);
     }
   }
 
-  int read_rdt(int client_id, string &message, int size)
+  string read_rdt(int client_id)
   {
-    while (wait_messages[client_id].size() == 0)
-    {
+    string message = serv.read_udp(client_id);
+    string msg;
+    if(check_hash(message, msg)) {
+      serv.write_udp(client_id, ack_ok);
+      return msg;
     }
-    message = wait_messages[client_id][0];
-    string _message;
-    for (int i=0;i<message.size()-4;i++) {
-      _message += message[i];
+    else {
+      serv.write_udp(client_id, ack_error);
+      return read_rdt(client_id);
     }
-    string hash;
-    hash += message[message.size()-2];
-    hash += message[message.size()-1];
-    string seq;
-    seq += message[message.size()-4];
-    seq += message[message.size()-3];
-    if(hash!=get_hash(_message)) {
-      cout<<"checksum incorrect"<<endl;
-    }
-    message = _message;
-    wait_messages[client_id].pop_front();
-    return 0;
   }
 };
-
-
-void _listener_rdt(rdt_server *rdt) {
-  (*rdt).listener();
-}
-
-void listener_rdt(rdt_server *rdt) {
-  thread(_listener_rdt, rdt).detach();
-}
-
 
 class rdt_client
 {
 public:
-  struct sockaddr_in servaddr;
-  int sockfd;
-  int client_id = -1;
-  int MAXLINE = 2048;
+  udp_client client;
   int sequence;
 
-  int write_rdt(string message)
+  rdt_client(string direction, int port)
   {
-    string _message = message;
-    int seq = sequence;
-    string seq_client;
-    seq_client += ('a' + (seq/10));
-    seq_client += ('a' + (seq%10));
-    message += seq_client;
-    message += get_hash(_message);
-    if (client_id != -1)
+    struct hostent *host;
+
+    host = (struct hostent *)gethostbyname(direction.c_str());
+
+    if ((client.sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
-      string id_str;
-      id_str += 'a' + client_id;
-      message = id_str + message;
+      perror("socket creation failed");
+      exit(EXIT_FAILURE);
     }
-    char buffer[message.size()];
-    for (int i = 0; i < message.size(); ++i)
-    {
-      buffer[i] = message[i];
-    }
-    socklen_t len = sizeof(servaddr);
-    sendto(sockfd, buffer, message.size(), MSG_CONFIRM, (const struct sockaddr *)&servaddr, len);
-    return 0;
+
+    memset(&client.servaddr, 0, sizeof(client.servaddr));
+
+    client.servaddr.sin_family = AF_INET;
+    client.servaddr.sin_port = htons(port);
+    client.servaddr.sin_addr = *((struct in_addr *)host->h_addr);
+    client.register_client();
   }
 
-  int read_rdt(string &message, int size)
+  void write_rdt(string _message)
   {
-    char buffer[MAXLINE];
-    socklen_t len = sizeof(servaddr);
-    memset(&servaddr, 0, sizeof(servaddr));
-    int n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-                     MSG_WAITALL, (struct sockaddr *)&servaddr,
-                     &len);
-    for (int i = 0; i < n - 4; i++)
-    {
-      message += buffer[i];
+    string message = _message + get_hash(_message);
+    client.write_udp(message);
+    string ack = client.read_udp();
+    if (ack != ack_ok) {
+      write_rdt(_message);
     }
-    string hash;
-    hash += buffer[n-2];
-    hash += buffer[n-1];
-    string seq;
-    seq += message[message.size()-4];
-    seq += message[message.size()-3];
+  }
 
-    if(hash != get_hash(message)) {
-      cout<<"checksum incorrect"<<endl;
+  string read_rdt()
+  {
+    string message = client.read_udp();
+    string msg;
+    if(check_hash(message, msg)) {
+      client.write_udp(ack_ok);
+      return msg;
     }
-
-    return 0;
+    else {
+      client.write_udp(ack_error);
+      return read_rdt();
+    }
   }
 };

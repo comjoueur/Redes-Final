@@ -23,6 +23,4 @@
 #include <stdlib.h>
 #include <fstream>
 
-#define PORT 8080
-
 using namespace std;
