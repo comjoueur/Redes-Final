@@ -1,6 +1,6 @@
 //g++ client.cpp -pthread -o client
 
-#include "rdt_extended.h"
+#include "headers/rdt_extended.h"
 
 rdt_extended_client client("127.0.0.1", 8080);
 

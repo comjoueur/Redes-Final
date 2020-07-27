@@ -1,7 +1,6 @@
 //g++ server.cpp -pthread -o server
 
-#include "lib.h"
-#include "rdt_extended.h"
+#include "headers/rdt_extended.h"
 
 rdt_extended_server serv(8080);
 

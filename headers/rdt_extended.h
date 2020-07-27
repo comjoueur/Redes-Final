@@ -1,5 +1,4 @@
 #include "rdt.h"
-#include "lib.h"
 
 int max_packages = 10;
 int max_msg_size = 2000;
