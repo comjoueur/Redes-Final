@@ -24,8 +24,8 @@ string extract_seq(string msg, string &t_msg)
     t_msg += msg[i];
   }
   string seq;
-  seq += msg[msg.size()-2];
-  seq += msg[msg.size()-1];
+  seq += msg[msg.size() - 2];
+  seq += msg[msg.size() - 1];
   return seq;
 }
 
@@ -92,7 +92,8 @@ public:
         acum_st = novo;
         acum_st.push_back(messages[i]);
       }
-      else {
+      else
+      {
         acum_st.push_back(messages[i]);
       }
     }
@@ -131,12 +132,14 @@ public:
     return message;
   }
 
-  void write_num(int client_id, int number) {
+  void write_num(int client_id, int number)
+  {
     string num = to_string(number);
     this->write(client_id, num);
   }
 
-  int read_num(int client_id) {
+  int read_num(int client_id)
+  {
     string number = this->read(client_id);
     return stoi(number);
   }
@@ -205,7 +208,8 @@ public:
         acum_st = novo;
         acum_st.push_back(messages[i]);
       }
-      else {
+      else
+      {
         acum_st.push_back(messages[i]);
       }
     }
@@ -244,12 +248,14 @@ public:
     return message;
   }
 
-  void write_num(int number) {
+  void write_num(int number)
+  {
     string num = to_string(number);
     this->write(num);
   }
 
-  int read_num() {
+  int read_num()
+  {
     string number = this->read();
     return stoi(number);
   }

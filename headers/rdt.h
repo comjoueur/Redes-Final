@@ -35,14 +35,16 @@ class rdt_server
 {
 public:
   udp_server serv;
-  vector<int>sequence;
+  vector<int> sequence;
   int num_clients = 0;
 
-  bool request_client() {
+  bool request_client()
+  {
     return num_clients != serv.clients.size();
   }
 
-  int accept_client() {
+  int accept_client()
+  {
     sequence.push_back(0);
     return num_clients++;
   }
@@ -76,7 +78,8 @@ public:
     string message = _message + get_hash(_message);
     serv.write_udp(client_id, message);
     string ack = serv.read_udp(client_id);
-    if (ack != ack_ok) {
+    if (ack != ack_ok)
+    {
       write_rdt(client_id, _message);
     }
   }
@@ -85,11 +88,13 @@ public:
   {
     string message = serv.read_udp(client_id);
     string msg;
-    if(check_hash(message, msg)) {
+    if (check_hash(message, msg))
+    {
       serv.write_udp(client_id, ack_ok);
       return msg;
     }
-    else {
+    else
+    {
       serv.write_udp(client_id, ack_error);
       return read_rdt(client_id);
     }
@@ -127,7 +132,8 @@ public:
     string message = _message + get_hash(_message);
     client.write_udp(message);
     string ack = client.read_udp();
-    if (ack != ack_ok) {
+    if (ack != ack_ok)
+    {
       write_rdt(_message);
     }
   }
@@ -136,11 +142,13 @@ public:
   {
     string message = client.read_udp();
     string msg;
-    if(check_hash(message, msg)) {
+    if (check_hash(message, msg))
+    {
       client.write_udp(ack_ok);
       return msg;
     }
-    else {
+    else
+    {
       client.write_udp(ack_error);
       return read_rdt();
     }

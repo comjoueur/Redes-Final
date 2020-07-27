@@ -52,7 +52,7 @@ public:
       int n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                        MSG_WAITALL, (struct sockaddr *)&cliaddr,
                        &len);
-      buffer[n]='\0';
+      buffer[n] = '\0';
       if (buffer[0] == 'R')
       {
         register_client(cliaddr);
@@ -97,7 +97,7 @@ public:
     socklen_t len = sizeof(servaddr);
     sendto(sockfd, buffer, 1, MSG_CONFIRM, (const struct sockaddr *)&servaddr, len);
     string msg = read_udp();
-    client_id = msg[0]-'a';
+    client_id = msg[0] - 'a';
   }
 
   void write_udp(string message)
