@@ -1,3 +1,8 @@
+# Final Project NET UCSP
+
+Academic project made in C++, which goal is to use slaves to manage database
+
+
 ## Build client
 
 ```
