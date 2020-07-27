@@ -1,4 +1,3 @@
-#include "lib.h"
 #include "udp.h"
 
 string ack_ok = "OK";
