@@ -2,7 +2,7 @@
 
 Academic project made in C++, which goal is to use slaves to manage data files
 
-# Considerations
+# Commands
 
 You have to create the directory "data" to save slaves data there.
 
