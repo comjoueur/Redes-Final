@@ -31,6 +31,17 @@ bool check_hash(string p, string &msg)
   return get_hash(msg) == hash;
 }
 
+int get_hash_file_key(string name, int total_slaves)
+{
+  int res = 0;
+  for (int i = 0; i < name.size(); i++)
+  {
+    res += (name[i] - 'a');
+  }
+  return res % total_slaves;
+}
+
+
 class rdt_server
 {
 public:
