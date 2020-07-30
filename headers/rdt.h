@@ -36,7 +36,7 @@ int get_hash_file_key(string name, int total_slaves)
   int res = 0;
   for (int i = 0; i < name.size(); i++)
   {
-    res += (name[i] - 'a');
+    res += (int)(name[i]);
   }
   return res % total_slaves;
 }
@@ -93,6 +93,16 @@ public:
     {
       write_rdt(client_id, _message);
     }
+  }
+
+  void write_rdt_num(int client_id, int num) {
+    string number = to_string(num);
+    return write_rdt(client_id, number);
+  }
+
+  int read_rdt_num(int client_id) {
+    string number = read_rdt(client_id);
+    return stoi(number);
   }
 
   string read_rdt(int client_id)
@@ -163,5 +173,15 @@ public:
       client.write_udp(ack_error);
       return read_rdt();
     }
+  }
+
+  void write_rdt_num(int num) {
+    string number = to_string(num);
+    return write_rdt(number);
+  }
+
+  int read_rdt_num() {
+    string number = read_rdt();
+    return stoi(number);
   }
 };

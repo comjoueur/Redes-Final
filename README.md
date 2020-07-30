@@ -36,7 +36,7 @@ g++ client.cpp -o client
 
 
 ## Run slave
-Consider to create 2 or 3 slave instances
+Create exactly 2 slaves
 
 ```
 ./slave
