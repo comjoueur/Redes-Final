@@ -8,7 +8,7 @@ vector<int> slaves;
 
 int get_slave_id(string node_name)
 {
-  return slaves[get_hash_file_key(node_name, 2)];
+  return slaves[get_hash_file_key(node_name, 4)];
 }
 
 void client_process(int client_id)
