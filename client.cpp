@@ -2,7 +2,7 @@
 
 #include "headers/rdt_extended.h"
 
-rdt_extended_client client("51.15.220.108", 50004);
+rdt_extended_client client("127.0.0.1", 50004);
 
 void client_process()
 {
