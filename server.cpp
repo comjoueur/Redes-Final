@@ -2,7 +2,7 @@
 
 #include "headers/rdt_extended.h"
 
-rdt_extended_server serv(8080);
+rdt_extended_server serv(50004);
 
 vector<int> slaves;
 

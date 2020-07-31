@@ -1,7 +1,6 @@
 .vscode/
 .vscode
 /.vscode
-/data
 server
 client
 slave

@@ -3,7 +3,7 @@
 #include "headers/rdt_extended.h"
 #include "headers/structures.h"
 
-rdt_extended_client client("127.0.0.1", 8080);
+rdt_extended_client client("127.0.0.1", 50004);
 
 int file_key = 0;
 
